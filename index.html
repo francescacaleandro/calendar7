@@ -14,10 +14,8 @@
       --text-muted: #888;
       --text-old: #6d6d6d;
       --radius: 6px;
-      --gap: 4px; /* spaziatura ridotta */
+      --gap: 4px;
     }
-
-    /* Body e wrapper con overflow nascosto */
     body {
       margin: 0;
       padding: 14px;
@@ -25,21 +23,17 @@
       color: var(--text);
       font-family: Poppins, sans-serif;
     }
-    .calendar-wrapper {
-      position: relative;
-    }
-
-    /* Frecce di navigazione (più piccole) */
+    .calendar-wrapper { position: relative; }
     .nav-button {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0,0,0,0.5);
       border: none;
       color: var(--text);
-      font-size: 20px;      /* leggermente ridotto */
-      width: 24px;          /* contenitore più piccolo */
-      height: 24px;         /* contenitore più piccolo */
+      font-size: 20px;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
       cursor: pointer;
       display: flex;
@@ -49,25 +43,17 @@
     }
     .nav-button.left { left: 4px; }
     .nav-button.right { right: 4px; }
-    .nav-button:hover {
-      background: rgba(0, 0, 0, 0.7);
-    }
-
-    /* Container orizzontale scrollabile */
+    .nav-button:hover { background: rgba(0,0,0,0.7); }
     #calendario {
       display: flex;
       gap: var(--gap);
       overflow-x: auto;
       padding: 0 var(--gap);
       scroll-snap-type: x mandatory;
-      -ms-overflow-style: none;  /* IE10+ */
-      scrollbar-width: none;     /* Firefox */
+      -ms-overflow-style: none;
+      scrollbar-width: none;
     }
-    #calendario::-webkit-scrollbar {
-      display: none;           /* WebKit scrollbar */
-    }
-
-    /* CARD GIORNATA */
+    #calendario::-webkit-scrollbar { display: none; }
     .day-card {
       background: var(--surface-day);
       border-radius: var(--radius);
@@ -88,8 +74,6 @@
       margin-bottom: 8px;
       text-align: center;
     }
-
-    /* RIGA PARTITA */
     .match {
       background: var(--surface);
       border-radius: var(--radius);
@@ -101,8 +85,6 @@
       flex-wrap: nowrap;
     }
     .match:last-child { margin-bottom: 0; }
-
-    /* DATA + ORA */
     .time {
       display: flex;
       flex-direction: column;
@@ -111,55 +93,20 @@
       line-height: 1.1;
       color: var(--text-muted);
     }
-
-    /* SQUADRE */
-    .team {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-      flex: 0 0 auto;
-    }
-    .team img {
-      width: 20px;
-      height: 20px;
-      object-fit: contain;
-    }
-    .team .code {
-      font-size: 12px;
-      white-space: nowrap;
-    }
-    .team.winner .code {
-      color: var(--accent);
-    }
-
-    /* PUNTEGGIO */
+    .team { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+    .team img { width: 20px; height: 20px; object-fit: contain; }
+    .team .code { font-size: 12px; white-space: nowrap; }
+    .team.winner .code { color: var(--accent); }
     .score {
       font-size: 15px;
       font-weight: 700;
       white-space: nowrap;
       margin: 0 4px;
     }
-    .score .vs {
-      color: #aaa;
-      font-weight: 400;
-      margin: 0 2px;
-    }
-    .score .dash {
-      color: var(--text-old);
-    }
-
-    /* STATO */
-    .status {
-      margin-left: auto;
-      font-size: 10px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-    .status.old {
-      color: var(--text-old);
-    }
-
-    /* ADATTAMENTO MOBILE */
+    .score .vs { color: #aaa; font-weight: 400; margin: 0 2px; }
+    .score .dash { color: var(--text-old); }
+    .status { margin-left: auto; font-size: 10px; font-weight: 600; white-space: nowrap; }
+    .status.old { color: var(--text-old); }
     @media (max-width: 480px) {
       .time { font-size: 8px; min-width: 50px; }
       .status { font-size: 8px; }
@@ -176,7 +123,6 @@
     <div id="calendario"></div>
     <button id="next" class="nav-button right">›</button>
   </div>
-
   <script>
     const SHEET_ID = '1ZmF-KoBHe5qvDwP09bqVBvjCopSgeEDwmDmxHU3lm8Q';
     const SHEET_NAME = 'Calendario';
@@ -189,34 +135,41 @@
       .then(rows => build(rows.filter(r => r.Data)));
 
     function build(rows) {
-      const gruppi = {}, sortKey = (a, b) => a.localeCompare(b, undefined, { numeric: true });
+      const gruppi = {};
+      const order = [];
       let g = '';
+
       rows.forEach(r => {
-        g = (r.Giornata || '').trim() || g;
+        const key = (r.Giornata || '').trim() || g;
+        g = key;
+        if (!gruppi[key]) {
+          gruppi[key] = [];
+          order.push(key);
+        }
         const [dd, mm, yyRaw] = r.Data.split('/');
         const yy = yyRaw || new Date().getFullYear();
         const golA = r.GolA ? +r.GolA : null;
         const golB = r.GolB ? +r.GolB : null;
-        const winner = (golA != null && golB != null)
-          ? (golA > golB ? 'A' : golB > golA ? 'B' : '')
-          : '';
-
-        (gruppi[g] = gruppi[g] || []).push({
+        gruppi[key].push({
           giorno: dd.padStart(2, '0'),
           mese: mm.padStart(2, '0'),
           dataISO: `${yy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`,
           ora: r.Ora.trim(),
-          logoA: IMG_BASE + ((r.LogoA || '').trim()),
-          logoB: IMG_BASE + ((r.LogoB || '').trim()),
+          logoA: (r.LogoA || '').trim() ? IMG_BASE + r.LogoA.trim() : '',
+          logoB: (r.LogoB || '').trim() ? IMG_BASE + r.LogoB.trim() : '',
           codiceA: (r.SquadraA || '').trim(),
           codiceB: (r.SquadraB || '').trim(),
-          golA, golB, winner
+          golA, golB,
+          winner: (golA != null && golB != null)
+            ? (golA > golB ? 'A' : golB > golA ? 'B' : '')
+            : ''
         });
       });
 
       const root = document.getElementById('calendario');
       root.innerHTML = '';
-      Object.keys(gruppi).sort(sortKey).forEach(k => {
+
+      order.forEach(k => {
         const card = document.createElement('div');
         card.className = 'day-card';
         card.innerHTML = `<div class="day-title">${k}</div>`;
@@ -224,13 +177,14 @@
         root.appendChild(card);
       });
 
-      // Aggiungi funzionalità frecce
+      // forza lo scroll iniziale sulla prima giornata
+      requestAnimationFrame(() => { root.scrollLeft = 0; });
+
       const cal = root;
       const prev = document.getElementById('prev');
       const next = document.getElementById('next');
-      const cardEl = cal.querySelector('.day-card');
       const gap = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gap'));
-      const step = (cardEl ? cardEl.offsetWidth : 260) + gap;
+      const step = (cal.querySelector('.day-card')?.offsetWidth || 260) + gap;
       prev.addEventListener('click', () => cal.scrollBy({ left: -step, behavior: 'smooth' }));
       next.addEventListener('click', () => cal.scrollBy({ left: step, behavior: 'smooth' }));
     }
@@ -240,17 +194,18 @@
       const old = finita && new Date(`${p.dataISO}T${p.ora}${TZ}`) < new Date();
       const a = finita ? p.golA : '<span class="dash">–</span>';
       const b = finita ? p.golB : '<span class="dash">–</span>';
-
+      const logoA = p.logoA ? `<img src="${p.logoA}" alt="">` : '';
+      const logoB = p.logoB ? `<img src="${p.logoB}" alt="">` : '';
       const el = document.createElement('div');
       el.className = 'match';
       el.innerHTML = `
         <span class="time">${p.giorno}/${p.mese}<span>${p.ora}</span></span>
         <span class="team ${p.winner==='A'? 'winner':''}">
-          <span class="code">${p.codiceA}</span><img src="${p.logoA}" alt="">
+          <span class="code">${p.codiceA}</span>${logoA}
         </span>
         <span class="score">${a}<span class="vs">vs</span>${b}</span>
         <span class="team ${p.winner==='B'? 'winner':''}">
-          <img src="${p.logoB}" alt=""><span class="code">${p.codiceB}</span>
+          ${logoB}<span class="code">${p.codiceB}</span>
         </span>
         ${finita? `<span class="status ${old? 'old':''}">Terminata</span>`: ''}
       `;
@@ -259,3 +214,4 @@
   </script>
 </body>
 </html>
+
